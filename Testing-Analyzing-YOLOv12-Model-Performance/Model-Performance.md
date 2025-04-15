@@ -1,10 +1,15 @@
-# YOLOv12 Custom Object Detection Script (using Ultralytics)
+# YOLO Object Detection and Blurring Scripts (using Ultralytics)
 
 ## Description
 
-This Python script demonstrates real-time object detection on video files or webcam streams using a YOLO model via the `ultralytics` library and OpenCV (`cv2`). It processes video frames, identifies objects based on the COCO dataset, draws bounding boxes with class labels and confidence scores, calculates and displays the processing Frames Per Second (FPS), and saves the resulting video.
+This repository contains two Python scripts demonstrating real-time object detection using a YOLO model via the `ultralytics` library and OpenCV (`cv2`).
 
-**Note on "YOLOv12":** The script loads a model named `yolo12n.pt`. As of this writing, "YOLOv12" is not an officially recognized version from the original YOLO authors or major research groups. This might be a custom-trained model, an unofficial variant, or potentially a naming convention specific to a certain project using the `ultralytics` framework (which commonly supports YOLOv5, YOLOv8, etc.). The underlying detection principles and usage with the `ultralytics` library remain consistent.
+1.  **`main.py`**: Performs standard object detection on video files or webcam streams. It identifies objects, draws bounding boxes with class labels and confidence scores, calculates FPS, and saves the annotated video.
+2.  **`obj_blurring.py`**: Extends the functionality of `main.py`. In addition to detection and annotation, it **blurs the area inside each detected bounding box** before drawing the box outline and label.
+
+Both scripts process video frames, identify objects based on the COCO dataset, calculate and display the processing Frames Per Second (FPS), and save the resulting video.
+
+**Note on "YOLOv12":** The scripts load a model named `yolo12n.pt`. As of this writing, "YOLOv12" is not an officially recognized version from the original YOLO authors or major research groups. This might be a custom-trained model, an unofficial variant, or potentially a naming convention specific to a certain project using the `ultralytics` framework (which commonly supports YOLOv5, YOLOv8, etc.). The underlying detection principles and usage with the `ultralytics` library remain consistent.
 
 ## Table of Contents
 
@@ -12,22 +17,19 @@ This Python script demonstrates real-time object detection on video files or web
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Usage](#usage)
-- [Code Explanation](#code-explanation)
-  - [Imports](#imports)
-  - [Video Input/Output Setup](#video-inputoutput-setup)
-  - [Model Loading & Class Names](#model-loading--class-names)
-  - [Processing Loop](#processing-loop)
-  - [Object Detection](#object-detection)
-  - [Processing Detections](#processing-detections)
-  - [Drawing Bounding Boxes & Labels](#drawing-bounding-boxes--labels)
-  - [FPS Calculation & Display](#fps-calculation--display)
-  - [Output & Cleanup](#output--cleanup)
+  - [Standard Detection (`main.py`)](#standard-detection-mainpy)
+  - [Detection with Blurring (`obj_blurring.py`)](#detection-with-blurring-obj_blurringpy)
+- [Code Explanation Highlights](#code-explanation-highlights)
+  - [Common Components (Both Scripts)](#common-components-both-scripts)
+  - [Blurring Logic (`obj_blurring.py` only)](#blurring-logic-obj_blurringpy-only)
 - [Configuration Parameters](#configuration-parameters)
 - [Screenshots](#screenshots)
-  - [Object Detection on Image Example](#object-detection-on-image-example)
-  - [Object Detection on Video Example](#object-detection-on-video-example)
+  - [Object Detection Example (`main.py`)](#object-detection-example-mainpy)
+  - [Blurred Object Detection Example (`obj_blurring.py`)](#blurred-object-detection-example-obj_blurringpy)
 
 ## Features
+
+**Both `main.py` and `obj_blurring.py`:**
 
 *   Real-time object detection on video files or live webcam feed.
 *   Uses a pre-trained YOLO model (`yolo12n.pt`) loaded via the `ultralytics` library.
@@ -38,121 +40,128 @@ This Python script demonstrates real-time object detection on video files or web
 *   Saves the processed video with annotations to an output file (`output.mp4`).
 *   Configurable confidence threshold and Non-Maximum Suppression (NMS) IoU threshold.
 
+**`obj_blurring.py` Only:**
+
+*   **Blurs the area inside detected bounding boxes** to anonymize or obscure objects.
+*   Configurable blur intensity (`blur_ratio`).
+
 ## Prerequisites
 
 *   Python 3.x
-*   OpenCV library
-*   Ultralytics library
-*   A pre-trained YOLO model file compatible with Ultralytics (e.g., `yolo12n.pt` used in the script).
+*   OpenCV library (`opencv-python`)
+*   Ultralytics library (`ultralytics`)
+*   A pre-trained YOLO model file compatible with Ultralytics (e.g., `yolo12n.pt` used in the scripts).
 *   An input video file (e.g., `video.mp4`) or a connected webcam.
 
 ## Installation
 
-1.  **Clone or download the script.**
+1.  **Clone or download the repository/scripts.**
 2.  **Install required Python libraries:**
     ```bash
     pip install opencv-python ultralytics
     ```
-3.  **Obtain the model file:** Make sure you have the `yolo12n.pt` model file (or your desired model) in the same directory as the script, or provide the correct path in the script.
-4.  **Prepare input video:** Place your input video file (e.g., `video.mp4`) in a `Resources/Videos/` subdirectory relative to the script, or modify the path in the `cv2.VideoCapture()` line. Create the directories if they don't exist.
+3.  **Obtain the model file:** Make sure you have the `yolo12n.pt` model file (or your desired model) in the same directory as the scripts, or provide the correct path within the scripts.
+4.  **Prepare input video:** Place your input video file (e.g., `video.mp4`) in a `Resources/Videos/` subdirectory relative to the scripts, or modify the path in the `cv2.VideoCapture()` line within the desired script. Create the directories if they don't exist.
 
 ## Usage
 
-1.  **Configure Input/Output:**
-    *   Modify the `cv2.VideoCapture(...)` line to point to your video file or change to `0` for the default webcam.
-    *   Modify the `cv2.VideoWriter(...)` line if you want to change the output filename (`output.mp4`).
+### Standard Detection (`main.py`)
+
+1.  **Configure `main.py` (Optional):**
+    *   Modify `cv2.VideoCapture(...)` for your video source.
+    *   Modify `cv2.VideoWriter(...)` for the output filename.
+    *   Adjust `conf` and `iou` parameters in `model.predict(...)` if needed.
 2.  **Run the script:**
     ```bash
-    python your_script_name.py
+    python main.py
     ```
-    (Replace `your_script_name.py` with the actual name of the Python file).
-3.  **Viewing:** An OpenCV window titled "Video" will open, displaying the video stream with detected objects, bounding boxes, labels, and FPS.
-4.  **Stopping:** Press the '1' key while the OpenCV window is active to stop the script.
-5.  **Output:** The processed video will be saved as `output.mp4` (or the configured filename) in the same directory as the script upon completion or interruption.
+3.  **Viewing:** An OpenCV window titled "Video" will show the stream with detected objects, bounding boxes, labels, and FPS.
+4.  **Stopping:** Press '1' in the OpenCV window.
+5.  **Output:** The processed video (without blurring) is saved as `output.mp4`.
 
-## Code Explanation
+### Detection with Blurring (`obj_blurring.py`)
 
-### Imports
+1.  **Configure `obj_blurring.py` (Optional):**
+    *   Modify `cv2.VideoCapture(...)` for your video source.
+    *   Modify `cv2.VideoWriter(...)` for the output filename.
+    *   Adjust `conf` and `iou` parameters in `model.predict(...)` if needed.
+    *   Adjust the `blur_ratio` variable to control blur intensity (higher means more blur).
+2.  **Run the script:**
+    ```bash
+    python obj_blurring.py
+    ```
+3.  **Viewing:** An OpenCV window titled "Video" will show the stream with detected objects **blurred inside their boxes**, along with box outlines, labels, and FPS.
+4.  **Stopping:** Press '1' in the OpenCV window.
+5.  **Output:** The processed video (with blurred objects) is saved as `output.mp4`.
 
-Imports necessary libraries:
-*   `cv2`: OpenCV for video/image handling and drawing.
-*   `math`: For rounding confidence scores (`math.ceil`).
-*   `time`: For calculating FPS.
-*   `ultralytics.YOLO`: The core class for loading and running the YOLO model.
+## Code Explanation Highlights
 
-### Video Input/Output Setup
+### Common Components (Both Scripts)
 
-*   `cv2.VideoCapture`: Opens the video source (file or webcam).
-*   Gets video properties (width, height, original FPS).
-*   `cv2.VideoWriter`: Configures the output video file (name, codec, FPS, frame size).
+*   **Imports**: `cv2`, `math`, `time`, `ultralytics.YOLO`.
+*   **Video I/O**: `cv2.VideoCapture` to read, `cv2.VideoWriter` to save.
+*   **Model Loading**: `model = YOLO("yolo12n.pt")`.
+*   **Class Names**: `cocoClassNames` list for mapping IDs.
+*   **Detection**: `results = model.predict(frame, conf=..., iou=...)`.
+*   **Box/Label Drawing**: Extracting `box.xyxy`, `box.cls`, `box.conf`; using `cv2.rectangle` and `cv2.putText` to draw annotations.
+*   **FPS Calculation**: Using `time.time()` difference between frames.
+*   **Main Loop**: `while True` loop reading frames, processing, displaying, and writing.
+*   **Cleanup**: `cap.release()`, `output_video.release()`, `cv2.destroyAllWindows()`.
 
-### Model Loading & Class Names
+### Blurring Logic (`obj_blurring.py` only)
 
-*   `model = YOLO("yolo12n.pt")`: Loads the specified YOLO model weights.
-*   `cocoClassNames`: A list containing the names of the 80 COCO dataset classes, used to map predicted class IDs to human-readable names.
+Located inside the loop iterating through detected `boxes`:
 
-### Processing Loop
+```python
+# --- Blurring Start (obj_blurring.py only) ---
+x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2) # Ensure coordinates are int
 
-*   A `while True` loop reads frames from the video source one by one (`cap.read()`).
-*   The loop continues as long as frames are successfully read (`ret` is True).
+# Extract the region of interest (ROI)
+blur = frame[y1:y2, x1:x2]
 
-### Object Detection
+# Apply blur to the ROI
+# Check if ROI is valid before blurring
+if blur.size > 0:
+    blur_obj = cv2.blur(blur, (blur_ratio, blur_ratio))
+    # Place the blurred ROI back into the main frame
+    frame[y1:y2, x1:x2] = blur_obj
+# --- Blurring End ---
 
-*   `results = model.predict(frame, conf=0.15, iou=0.1)`: Performs object detection on the current `frame`.
-    *   `conf=0.15`: Sets the confidence threshold. Only detections with a score >= 15% are kept.
-    *   `iou=0.1`: Sets the IoU threshold for Non-Maximum Suppression (NMS). Lower values mean stricter suppression of overlapping boxes.
-
-### Processing Detections
-
-*   Iterates through the `results` and then through each detected `box`.
-*   Extracts bounding box coordinates (`box.xyxy`), class ID (`box.cls`), and confidence score (`box.conf`).
-
-### Drawing Bounding Boxes & Labels
-
-*   Converts coordinates to integers.
-*   `cv2.rectangle`: Draws the bounding box on the frame.
-*   Looks up the class name using the class ID.
-*   Formats the confidence score.
-*   Creates a text label (`ClassName:Confidence`).
-*   Calculates text size to draw a filled background rectangle for better readability.
-*   `cv2.putText`: Draws the class name and confidence score above the bounding box.
-
-### FPS Calculation & Display
-
-*   Uses `time.time()` before and after processing to measure elapsed time per frame.
-*   Calculates FPS = 1 / (elapsed time).
-*   `cv2.putText`: Draws the calculated FPS on the top-left corner of the frame.
-
-### Output & Cleanup
-
-*   `output_video.write(frame)`: Writes the processed frame (with drawings) to the output video file.
-*   `cv2.imshow("Video", frame)`: Displays the processed frame in a window.
-*   `cv2.waitKey(1)`: Waits briefly for user input. If '1' is pressed, the loop breaks.
-*   The loop also breaks if the video ends (`ret` is False).
-*   `cap.release()`: Releases the video input source.
-*   `output_video.release()`: **Crucially finalizes and saves the output video file.** (Ensure this line is present in your code before `cv2.destroyAllWindows()`).
-*   `cv2.destroyAllWindows()`: Closes the OpenCV display window.
+# Draw rectangle *after* blurring
+cv2.rectangle(frame, (x1, y1), (x2, y2), [255,0,0], 2)
+# ... rest of label drawing ...
+```
+*   The key steps are slicing the frame to get the detected object's region (`frame[y1:y2, x1:x2]`), applying `cv2.blur` to that slice, and then putting the blurred slice back into the original frame.
+*   A check `if blur.size > 0:` is added as good practice to avoid errors if the coordinates somehow result in an empty slice.
 
 ## Configuration Parameters
 
-You can easily modify these parameters in the script:
+Modify these within the respective script (`main.py` or `obj_blurring.py`):
 
-*   `cap = cv2.VideoCapture("Resources/Videos/video.mp4")`: Change the path to your video or use `0` for webcam.
-*   `output_video = cv2.VideoWriter('output.mp4', ...)`: Change `'output.mp4'` to your desired output filename.
-*   `model = YOLO("yolo12n.pt")`: Change `"yolo12n.pt"` to the path of your model file.
-*   `conf=0.15`: Adjust the confidence threshold (0.0 to 1.0). Higher values mean fewer, but likely more accurate, detections.
-*   `iou=0.1`: Adjust the NMS IoU threshold (0.0 to 1.0). Higher values allow more overlapping boxes.
+*   `cap = cv2.VideoCapture(...)`: Input video source.
+*   `output_video = cv2.VideoWriter(...)`: Output video file configuration.
+*   `model = YOLO(...)`: Path to the YOLO model file.
+*   `conf=...` (in `model.predict`): Confidence threshold (0.0 to 1.0).
+*   `iou=...` (in `model.predict`): NMS IoU threshold (0.0 to 1.0).
+*   `blur_ratio = 50` (**`obj_blurring.py` only**): Kernel size for blurring intensity.
+
 
 ## Screenshots
 
-*(Replace the placeholder links/text below with actual screenshots)*
 
-### Object Detection on Image Example
+### Object Detection Example (`main.py`)
+
+#### Object Detection on Image Example
 
 ![Object Detection on Image Placeholder](../shared/Testing-And-Analyzing/image-boundaries.png)
 *Caption: Example of object detection results on a single image frame.*
 
-### Object Detection on Video Example
+#### Object Detection on Video Example
 
 ![Object Detection on Video Placeholder](../shared/Testing-And-Analyzing/ezgif-273383aa0a9c94.gif)
 *Caption: Example frame from the processed output video showing detected objects, labels, and FPS.*
+
+### Blurred Object Detection Example (`obj_blurring.py`)
+
+![Blurred Object Detection GIF Placeholder](../shared/Testing-And-Analyzing/obj_blurring.gif)
+*Caption: Example GIF output from `obj_blurring.py` showing detected objects blurred within their bounding boxes.*
