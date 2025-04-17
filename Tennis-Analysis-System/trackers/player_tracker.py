@@ -2,10 +2,71 @@
 import cv2
 import pickle
 from ultralytics import YOLO
+from utils import measure_distance, get_center_bbox
 
 class PlayerTracker:
     def __init__(self, model_path):
         self.model = YOLO(model_path)  # Load the YOLO model from the given path
+
+    # This method selects two players closest to the court keypoints from the first frame of the #detections. It then filters the tracking data across all frames to include only these two #selected players.
+    def choose_and_filter_players(self, court_keypoints, player_detections):
+        # Take player detections from the first frame
+        player_detections_first_frame = player_detections[0]
+
+        # Choose two players closest to the court keypoints
+        chosen_player = self.choose_players(court_keypoints, player_detections_first_frame)
+
+        # Initialize a list to store filtered detections for each frame
+        filtered_player_detections = []
+
+        # Iterate over each frame's player detections
+        for player_det in player_detections:
+            # Keep only the bounding boxes of the chosen players
+            filtered_player_dict = {
+                track_id: bbox for track_id, bbox in player_det.items() if track_id in chosen_player
+            }
+            # Append the filtered dictionary for the current frame
+            filtered_player_detections.append(filtered_player_dict)
+
+        # Return the filtered detections for all frames
+        return filtered_player_detections
+
+
+# This method calculates the distances between the center of each player's bounding box and # all court keypoints. It returns the track IDs of the two players that are closest to the #court.
+
+    def choose_players(self, court_keypoints, player_dict):
+        distances = []  # List to hold distances between players and court keypoints
+
+        # Iterate through all tracked players and their bounding boxes
+        for track_id, bbox in player_dict.items():
+            # Compute the center of the player's bounding box
+            player_center = get_center_bbox(bbox)
+
+            # Initialize minimum distance to a large number
+            min_distance = float('inf')
+
+            # Iterate over court keypoints in (x, y) pairs
+            for i in range(0, len(court_keypoints), 2):
+                court_keypoint = (court_keypoints[i], court_keypoints[i + 1])
+
+                # Measure distance from player center to this court keypoint
+                distance = measure_distance(player_center, court_keypoint)
+
+                # Update the minimum distance if this is closer
+                if distance < min_distance:
+                    min_distance = distance
+
+            # Store the player's track ID and its closest distance to the court
+            distances.append((track_id, min_distance))
+
+        # Sort players by their closest distance to the court (ascending)
+        distances.sort(key=lambda x: x[1])
+
+        # Select the two closest players based on distance
+        chosen_players = [distances[0][0], distances[1][0]]
+
+        return chosen_players
+
 
     def detect_frame(self, frame):
         results = self.model.track(frame, persist=True)[0]  # Run object tracking on the input frame and get the first result

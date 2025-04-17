@@ -20,6 +20,9 @@ def main():
     court_line_detector = CourtLineDetector(model_path=court_model_path)
     court_keypoints = court_line_detector.predict(video_frames[0])
 
+    # Choose and Filter Players
+    player_detections = player_tracker.choose_and_filter_players(court_keypoints, player_detections)
+
     # Draw output
     # Draw Player Bounding Boxes
     output_video_frames = player_tracker.draw_bboxes(video_frames, player_detections)

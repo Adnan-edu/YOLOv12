@@ -3,3 +3,6 @@ yelov12_venv/
 .idea/
 Tennis-Analysis-System/models
 runs/detect
+*.py[cod]
+__pycache__/
+**/__pycache__/
