@@ -1,3 +1,5 @@
 yelov12_venv/
 .DS_Store
 .idea/
+Tennis-Analysis-System/models
+runs/detect

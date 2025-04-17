@@ -4,3 +4,4 @@ matplotlib
 ipython
 opencv-python
 ultralytics
+lap
