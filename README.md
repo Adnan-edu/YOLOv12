@@ -985,7 +985,7 @@ This section provides common setup and usage instructions applicable across the 
 <a id="acknowledgments"></a>
 ## ![Credits Badge](https://img.shields.io/badge/Credits-MuhammadMoin-blue?style=flat-square)
 
-The content is based on Muhammad Moin's comprehensive computer vision course - Custom Object Detection and Tracking with YOLOv12, and Build Web Apps with Flask, and reflects his expertise in making complex computer vision concepts accessible through practical, hands-on examples.
+The content is based on Muhammad Moin's comprehensive computer vision course from Udemy - Custom Object Detection and Tracking with YOLOv12, and Build Web Apps with Flask, and reflects his expertise in making complex computer vision concepts accessible through practical, hands-on examples.
 
-Visit [Daniel's GitHub profile](https://github.com/MuhammadMoinFaisal) for more resources on computer vision.
+Visit [Muhammad Moin's GitHub profile](https://github.com/MuhammadMoinFaisal) for more resources on computer vision.
 
