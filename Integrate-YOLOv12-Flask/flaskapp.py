@@ -5,6 +5,8 @@ import os
 import cv2
 import time
 from ultralytics import YOLO
+import numpy as np
+
 
 # Initialize Flask Application
 app = Flask(__name__)
@@ -101,6 +103,55 @@ def generate_frames():
     cap.release()
 
 
+def generate_heatmap():
+    """Processes video frames and runs object detection on them."""
+    global uploaded_video_path
+
+    if not uploaded_video_path or not os.path.exists(uploaded_video_path):
+        print("Error: No video uploaded.")
+        return
+
+    cap = cv2.VideoCapture(uploaded_video_path)
+    globalImgArray = None
+    # Calculate the frame width  and frame height
+    w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    # print("Frame Width", w, "Frame Height", h)
+    globalImgArray = np.ones([int(h), int(w)], dtype=np.uint32)
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        results = model.predict(frame, conf=0.15, iou=0.1)
+        for result in results:
+            boxes = result.boxes
+            for box in boxes:
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                cv2.rectangle(frame, (x1, y1), (x2, y2), [255, 0, 0], 2)
+                classNameInt = int(box.cls[0])
+                classname = cocoClassNames[classNameInt]
+                conf = round(box.conf[0].item(), 2)
+                label = f"{classname}: {conf}"
+                text_size = cv2.getTextSize(label, 0, fontScale=0.5, thickness=2)[0]
+                c2 = x1 + text_size[0], y1 - text_size[1] - 3
+                cv2.rectangle(frame, (x1, y1), c2, [255, 0, 0], -1)
+                cv2.putText(frame, label, (x1, y1 - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, [255, 255, 255], 1)
+                #Creating the Intensity Heatmaps
+                globalImgArray[y1:y2, x1:x2] += 1
+        globalImgArrayNorm = (globalImgArray - globalImgArray.min()) / (globalImgArray.max() - globalImgArray.min())*255
+        globalImgArrayNorm = globalImgArrayNorm.astype('uint8')
+        globalImgArrayNorm = cv2.GaussianBlur(globalImgArrayNorm, (9,9), 0)
+        heatMapImg = cv2.applyColorMap(globalImgArrayNorm, cv2.COLORMAP_JET)
+        superImposedFrame = cv2.addWeighted(heatMapImg, 0.5, frame, 0.5, 0)
+        ret, buffer = cv2.imencode('.jpg', superImposedFrame)
+        frame = buffer.tobytes()
+        yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+    cap.release()
+
+
+
 @app.route('/video_feed')
 def video_feed():
     """Provides the video stream to the frontend if a video has been uploaded."""
@@ -114,6 +165,14 @@ def video_feed():
 def person_count():
     """API to return the latest person count"""
     return jsonify({"count": latest_person_count})
+
+@app.route('/generate_map')
+def generate_map():
+    """Provides the video stream to the frontend if a video has been uploaded."""
+    global uploaded_video_path
+    if not uploaded_video_path or not os.path.exists(uploaded_video_path):
+        return jsonify({'error': 'No video uploaded'}), 400
+    return Response(generate_heatmap(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True)
